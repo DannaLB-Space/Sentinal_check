@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Orbital Stability - L40</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 8px;
+            border-bottom: 3px solid #58a6ff;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #58a6ff;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1rem;
+            opacity: 0.8;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #21262d;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #8b949e;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #fff;
+        }
+
+        .alert {
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid #58a6ff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Satellite Stability Dashboard</h1>
+            <p>Analysis of 14,308 epochs from Sat1.txt (Jan 2024)</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">Min Altitude</div>
+                <div id="stat-min-alt" class="stat-value">--</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Max Semi-Major Axis</div>
+                <div id="stat-sma" class="stat-value">--</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Avg Eccentricity</div>
+                <div id="stat-ecc" class="stat-value">--</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Semi-Major Axis ($a$) over Time</h2>
+                <canvas id="smaChart"></canvas>
+            </div>
+            <div class="card">
+                <h2>Eccentricity ($e$) over Time</h2>
+                <canvas id="eccChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="trend_data.js"></script>
+    <script>
+        if (typeof trendData !== 'undefined') {
+            const labels = trendData.trends.map(d => d.time);
+            const smaData = trendData.trends.map(d => d.attr.sma);
+            const eccData = trendData.trends.map(d => d.attr.ecc);
+
+            document.getElementById('stat-min-alt').innerText = trendData.stats.min_alt_val + ' km';
+            document.getElementById('stat-sma').innerText = Math.max(...smaData).toFixed(1) + ' km';
+
+            const avgEcc = eccData.reduce((a, b) => a + b, 0) / eccData.length;
+            document.getElementById('stat-ecc').innerText = avgEcc.toFixed(6);
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#8b949e', maxRotation: 45, minRotation: 45 }, grid: { color: '#21262d' } },
+                    y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } }
+                },
+                plugins: { legend: { display: false } }
+            };
+
+            // SMA Chart
+            new Chart(document.getElementById('smaChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: smaData,
+                        borderColor: '#58a6ff',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Eccentricity Chart
+            new Chart(document.getElementById('eccChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: eccData,
+                        borderColor: '#3fb950',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+    </script>
+</body>
+
+</html>
